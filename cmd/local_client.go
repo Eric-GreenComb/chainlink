@@ -106,8 +106,12 @@ func logNodeBalance(store *strpkg.Store) {
 }
 
 func logConfigVariables(store *strpkg.Store) {
-	wlc := presenters.NewConfigWhitelist(store)
-	logger.Debug("Environment variables\n", wlc)
+	wlc, err := presenters.NewConfigWhitelist(store)
+	if err != nil {
+		logger.Error("Failed to build environment variables\n", err)
+	} else {
+		logger.Debug("Environment variables\n", wlc)
+	}
 }
 
 // DeleteUser is run locally to remove the User row from the node's database.
