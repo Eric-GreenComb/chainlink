@@ -148,7 +148,7 @@ func (txm *EthTxManager) MeetsMinConfirmations(hash common.Hash) (bool, error) {
 	var merr error
 	for _, txat := range attempts {
 		success, err := txm.checkAttempt(&tx, &txat, blkNum)
-		merr = multierr.Combine(merr, err)
+		merr = multierr.Append(merr, err)
 		if success {
 			return success, merr
 		}
