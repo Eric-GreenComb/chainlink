@@ -134,7 +134,9 @@ type ConfigWhitelist struct {
 }
 
 // NewConfigWhitelist creates an instance of ConfigWhitelist
-func NewConfigWhitelist(config store.Config) ConfigWhitelist {
+func NewConfigWhitelist(store *store.Store) ConfigWhitelist {
+	config := store.Config
+
 	return ConfigWhitelist{
 		AllowOrigins:             config.AllowOrigins,
 		BridgeResponseURL:        config.BridgeResponseURL.String(),
@@ -153,12 +155,12 @@ func NewConfigWhitelist(config store.Config) ConfigWhitelist {
 		MinIncomingConfirmations: config.MinIncomingConfirmations,
 		MinOutgoingConfirmations: config.MinOutgoingConfirmations,
 		OracleContractAddress:    config.OracleContractAddress,
-		Port:             config.Port,
-		ReaperExpiration: config.ReaperExpiration,
-		RootDir:          config.RootDir,
-		SessionTimeout:   config.SessionTimeout,
-		TLSHost:          config.TLSHost,
-		TLSPort:          config.TLSPort,
+		Port:                     config.Port,
+		ReaperExpiration:         config.ReaperExpiration,
+		RootDir:                  config.RootDir,
+		SessionTimeout:           config.SessionTimeout,
+		TLSHost:                  config.TLSHost,
+		TLSPort:                  config.TLSPort,
 	}
 }
 
