@@ -108,6 +108,7 @@ func (a *AccountBalance) SetID(value string) error {
 
 // ConfigWhitelist are the non-secret values of the node
 type ConfigWhitelist struct {
+	AccountAddress           string          `json:"accountAddress"`
 	AllowOrigins             string          `json:"allowOrigins"`
 	BridgeResponseURL        string          `json:"bridgeResponseURL,omitempty"`
 	ChainID                  uint64          `json:"ethChainId"`
@@ -136,8 +137,13 @@ type ConfigWhitelist struct {
 // NewConfigWhitelist creates an instance of ConfigWhitelist
 func NewConfigWhitelist(store *store.Store) ConfigWhitelist {
 	config := store.Config
+	var accountAddress string
+
+	account, _ := store.KeyStore.GetAccount()
+	accountAddress = account.Address.Hex()
 
 	return ConfigWhitelist{
+		AccountAddress:           accountAddress,
 		AllowOrigins:             config.AllowOrigins,
 		BridgeResponseURL:        config.BridgeResponseURL.String(),
 		ChainID:                  config.ChainID,
