@@ -3,6 +3,7 @@ package store_test
 import (
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -497,4 +498,56 @@ func TestActiveAccount_GetAndIncrementNonce_DoesNotIncrementWhenCallbackThrowsEx
 	})
 	assert.Error(t, err)
 	assert.Equal(t, uint64(0), activeAccount.GetNonce())
+}
+
+func TestTxManager_ChecksBalanceAfterTx(t *testing.T) {
+	t.Parallel()
+
+	////////////////////////////////////////////////////////////////////////
+	// Set up an app with an oracle address to check the balance of
+	config, configCleanup := cltest.NewConfig()
+	defer configCleanup()
+	oracleAddress := "0xDEADB3333333F"
+	oca := common.HexToAddress(oracleAddress)
+	config.OracleContractAddress = &oca
+	app, cleanup := cltest.NewApplicationWithConfigAndKeyStore(config)
+	defer cleanup()
+
+	//////////////////////////////////////////////////////////////////////
+	// Set up a successful tx, as in TestTxManager_CreateTx_Success
+	manager := app.Store.TxManager
+
+	to := cltest.NewAddress()
+	data, err := hex.DecodeString("0000abcdef")
+	assert.NoError(t, err)
+	hash := cltest.NewHash()
+	sentAt := uint64(23456)
+	nonce := uint64(256)
+	ethMock := app.MockEthClient()
+	ethMock.Context("app.Start()", func(ethMock *cltest.EthMock) {
+		ethMock.Register("eth_getTransactionCount", utils.Uint64ToHex(nonce))
+	})
+	assert.NoError(t, app.Start())
+
+	mockedBalance := "0x100"
+	ethMock.Context("manager.CreateTx#1", func(ethMock *cltest.EthMock) {
+		ethMock.Register("eth_sendRawTransaction", hash)
+		ethMock.Register("eth_blockNumber", utils.Uint64ToHex(sentAt))
+		//////////////////////////////////////////////////////////////////////
+		// Register that the balance should be checked
+		ethMock.Register("eth_getBalance", mockedBalance)
+	})
+
+	_, err = manager.CreateTx(to, data)
+	assert.NoError(t, err)
+
+	////////////////////////////////////////////////////////////////////////
+	// Verify that the balance should be checked.
+	ethMock.EventuallyAllCalled(t)
+
+	////////////////////////////////////////////////////////////////////////
+	// Verify that the balance was reported to the logs
+	logs, err := cltest.ReadLogs(app)
+	assert.NoError(t, err)
+	assert.Contains(t, logs, fmt.Sprintf("New balance of %v: %v", oracleAddress, mockedBalance))
 }
