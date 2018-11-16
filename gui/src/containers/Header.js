@@ -1,10 +1,10 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
+import { withStyles } from '@material-ui/core/styles'
 import { Link } from 'react-static'
 import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
 import ReactResizeDetector from 'react-resize-detector'
-import { withStyles } from '@material-ui/core/styles'
 import AppBar from '@material-ui/core/AppBar'
 import Toolbar from '@material-ui/core/Toolbar'
 import Grid from '@material-ui/core/Grid'
@@ -19,6 +19,7 @@ import MenuIcon from '@material-ui/icons/Menu'
 import Portal from '@material-ui/core/Portal'
 import LoadingBar from 'components/LoadingBar'
 import Logo from 'components/Logo'
+import AvatarMenu from 'components/AvatarMenu'
 import { submitSignOut } from 'actions'
 import fetchCountSelector from 'selectors/fetchCount'
 
@@ -137,7 +138,7 @@ class Header extends Component {
           </ListItem>
           {this.props.authenticated &&
             <ListItem className={classes.horizontalNavItem}>
-              <Link to='/signout' className={classes.horizontalNavLink}>Sign Out</Link>
+              <AvatarMenu />
             </ListItem>
           }
         </List>
