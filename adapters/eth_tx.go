@@ -1,16 +1,12 @@
 package adapters
 
 import (
-	"fmt"
-	"math/big"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/smartcontractkit/chainlink/logger"
 	"github.com/smartcontractkit/chainlink/store"
 	"github.com/smartcontractkit/chainlink/store/models"
 	"github.com/smartcontractkit/chainlink/utils"
-	"github.com/tidwall/gjson"
 )
 
 const (
@@ -38,59 +34,14 @@ func (etx *EthTx) Perform(input models.RunResult, store *store.Store) models.Run
 	return ensureTxRunResult(input, store)
 }
 
-func abiEncodeValue(value gjson.Result) ([]byte, error) {
-	prefix := utils.EVMWordUint64(utils.EVMWordByteLen * 2)
-	switch value.Type {
-	case gjson.String:
-		input := []byte(value.Str)
-		length := len(input)
-		return utils.ConcatBytes(
-			prefix,
-			utils.EVMWordUint64(uint64(length)),
-			input,
-			make([]byte, utils.EVMWordByteLen-(length%utils.EVMWordByteLen)))
-
-	case gjson.False:
-		return utils.ConcatBytes(
-			prefix,
-			utils.EVMWordUint64(utils.EVMWordByteLen),
-			utils.EVMWordUint64(0))
-
-	case gjson.True:
-		return utils.ConcatBytes(
-			prefix,
-			utils.EVMWordUint64(utils.EVMWordByteLen),
-			utils.EVMWordUint64(1))
-
-	case gjson.Number:
-		word, err := utils.EVMWordSignedBigInt(big.NewInt(int64(value.Num)))
-		if err != nil {
-			return []byte{}, nil
-		}
-
-		return utils.ConcatBytes(
-			prefix,
-			utils.EVMWordUint64(utils.EVMWordByteLen),
-			word)
-
-	default:
-		return []byte{}, fmt.Errorf("unsupported encoding for value: %s", value.Type)
-	}
-}
-
 // getTxData returns the data to save against the callback encoded according to
 // the dataFormat parameter in the job spec
 func getTxData(e *EthTx, input models.RunResult) ([]byte, error) {
 	value := input.Get("value")
-
-	if e.DataFormat == DataFormatBytes {
-		return abiEncodeValue(value)
+	if e.DataFormat == "" {
+		return common.HexToHash(value.Str).Bytes(), nil
 	}
-
-	if value.Type != gjson.String {
-		return []byte{}, fmt.Errorf("getTxData: non string value")
-	}
-	return common.HexToHash(value.Str).Bytes(), nil
+	return utils.EVMTranscodeJSONWithFormat(value, e.DataFormat)
 }
 
 func createTxRunResult(

@@ -323,103 +323,35 @@ func TestEthTxAdapter_Perform_PendingConfirmations_WithErrorInTxManager(t *testi
 }
 
 func TestEthTxAdapter_DeserializationBytesFormat(t *testing.T) {
-	tests := []struct {
-		name             string
-		json             string
-		expectedEncoding []byte
-	}{
-		{
-			"value is string",
-			`{"value": "hello world"}`,
-			[]byte{
-				0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x40,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x0b,
-				0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x77, 0x6f, 0x72, 0x6c, 0x64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			},
-		},
-		{
-			"value is bool true",
-			`{"value": true}`,
-			[]byte{
-				0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x40,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x20,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x01,
-			},
-		},
-		{
-			"value is bool false",
-			`{"value": false}`,
-			[]byte{
-				0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x40,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x20,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x00,
-			},
-		},
-		{
-			"value is positive integer",
-			`{"value": 19}`,
-			[]byte{
-				0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x40,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x20,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x13,
-			},
-		},
-		{
-			"value is negative integer",
-			`{"value": -23}`,
-			[]byte{
-				0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x40,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x20,
-				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xe9,
-			},
-		},
-		{
-			"value has decimal places",
-			`{"value": 19.99}`,
-			[]byte{
-				0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x40,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x20,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x13,
-			},
-		},
+	store, cleanup := cltest.NewStore()
+	defer cleanup()
+	ctrl := gomock.NewController(t)
+	txmMock := mock_store.NewMockTxManager(ctrl)
+	store.TxManager = txmMock
+	txmMock.EXPECT().CreateTx(gomock.Any(), []byte{
+		0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x40,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x0b,
+		0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x77, 0x6f, 0x72, 0x6c, 0x64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	}).Return(&models.Tx{}, nil)
+	txmMock.EXPECT().MeetsMinConfirmations(gomock.Any())
+
+	task := models.TaskSpec{}
+	err := json.Unmarshal([]byte(`{"type": "EthTx", "params": {"format": "bytes"}}`), &task)
+	assert.NoError(t, err)
+	assert.Equal(t, task.Type, adapters.TaskTypeEthTx)
+
+	adapter, err := adapters.For(task, store)
+	assert.NoError(t, err)
+	ethtx, ok := adapter.BaseAdapter.(*adapters.EthTx)
+	assert.True(t, ok)
+	assert.Equal(t, ethtx.DataFormat, adapters.DataFormatBytes)
+
+	input := models.RunResult{
+		Data:   cltest.JSONFromString(`{"value": "hello world"}`),
+		Status: models.RunStatusInProgress,
 	}
-
-	for _, tt := range tests {
-		test := tt
-		t.Run(test.name, func(t *testing.T) {
-
-			store, cleanup := cltest.NewStore()
-			defer cleanup()
-			ctrl := gomock.NewController(t)
-			txmMock := mock_store.NewMockTxManager(ctrl)
-			store.TxManager = txmMock
-			txmMock.EXPECT().CreateTx(gomock.Any(), tt.expectedEncoding).Return(&models.Tx{}, nil)
-			txmMock.EXPECT().MeetsMinConfirmations(gomock.Any())
-
-			task := models.TaskSpec{}
-			err := json.Unmarshal([]byte(`{"type": "EthTx", "params": {"format": "bytes"}}`), &task)
-			assert.NoError(t, err)
-			assert.Equal(t, task.Type, adapters.TaskTypeEthTx)
-
-			adapter, err := adapters.For(task, store)
-			assert.NoError(t, err)
-			ethtx, ok := adapter.BaseAdapter.(*adapters.EthTx)
-			assert.True(t, ok)
-			assert.Equal(t, ethtx.DataFormat, adapters.DataFormatBytes)
-
-			input := models.RunResult{
-				Data:   cltest.JSONFromString(tt.json),
-				Status: models.RunStatusInProgress,
-			}
-			result := adapter.Perform(input, store)
-			assert.False(t, result.HasError())
-			assert.Equal(t, result.Error(), "")
-		})
-	}
+	result := adapter.Perform(input, store)
+	assert.False(t, result.HasError())
+	assert.Equal(t, result.Error(), "")
 }
